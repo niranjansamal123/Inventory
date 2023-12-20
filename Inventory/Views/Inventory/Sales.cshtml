@@ -1,0 +1,155 @@
+﻿@model Inventory.Models.SaleModel
+
+@{
+    ViewBag.Title = "Sale";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="~/Content/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Scripts/jquery-ui-1.13.2.min.js"></script>
+</head>
+<body>
+    <h2 style="text-align:center;background-color:yellowgreen;color:orangered">Sale Master</h2>
+        @using (Html.BeginForm("AddSale", "Inventory", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            <table width="100%">
+                <tr>
+                    @*Add Sales*@
+                    <td valign="top">
+                        <table border="1" align="center" class="table table-responsive table-striped table-hover table-bordered text-center">
+                            <tr>
+                                <th colspan="2" align="center">Add Sale</th>
+                            </tr>
+                            <tr>
+                                <td><label for="txtCustID">Enter Customer ID</label></td>
+                                <td><input type="text" id="txtCustID" name="CustomerId" /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="txtCustName">Customer Name</label></td>
+                                <td><input type="text" id="txtCustName" name="CustomerName" readonly /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="ddlProduct">Select Product</label></td>
+                                <td>
+                                    <select id="ddlProduct" name="SelectProduct">
+                                        <option value="">-----Select Product-----</option>
+                                        <!-- Assuming Model.Products is a collection of products -->
+                                        @foreach (var product in Model.Products)
+                                        {
+                                            <option value="@product.Pid">@product.Pname</option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><label for="txtProductPrice">Product Price</label></td>
+                                <td><input type="text" id="txtProductPrice" name="ProductPrice" readonly /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="datepicker">Sale Date</label></td>
+                                <td><input type="text" id="datepicker" name="SaleDate" /></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" align="center">
+                                    <input type="submit" value="Insert" name="btnInsert" class="btn btn-group-sm border btn-success" />
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                    @*Display Sales*@
+                    <td valign="top">
+                        <form id="frmCustomer">
+                            <table border="1" align="center" class="table table-responsive table-striped table-hover table-bordered text-center">
+                                <tr>
+                                    <th colspan="4" align="center">Display Sales</th>
+                                </tr>
+                                <tr>
+                                    <th><label>Product Name</label></th>
+                                    <th><label>Customer Name</label></th>
+                                    <th><label>Date</label></th>
+                                    <th><label>Price</label></th>
+                                </tr>
+                                @foreach (var sale in Model.Sales)
+                                {
+                                    <tr>
+                                        <td>@sale.SelectProduct</td>
+                                        <td>@sale.CustomerName</td>
+                                        <td>@sale.SaleDate.ToString("dd/MM/yyyy")</td>
+                                        <td>@sale.ProductPrice</td>
+                                    </tr>
+                                }
+
+                            </table>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        }
+    </body>
+</html>
+
+
+
+
+<script>
+    $(document).ready(function () {
+        $("#txtCustID").on("input", function () {
+            var custID = $(this).val();
+            $.ajax({
+                url: '/Inventory/GetCustomerNameByCustomerID',
+                type: 'get',
+                dataType: 'text',
+                data: { 'customerID': $('#txtCustID').val() },
+                success: function (result) {
+                    if (result == "") {
+                        alert("No customer exists with the given id.");
+                        $('#txtCustName').val('');
+                    }
+                    else {
+                        $("#txtCustName").val(result);
+                    }
+                },
+                error: DisplayError
+            });
+        });
+
+        $("#ddlProduct").change(function () {
+            /*alert($('option:selected', this).val());*/
+            $.ajax({
+                url: '/Inventory/GetProductPriceByProductID',
+                type: 'get',
+                dataType: 'text',
+                data: { 'Pid': $('#ddlProduct').val() },
+                success: function (result) {
+                    if (result == "") {
+                        alert("No product exists with the given id.");
+                        $('#txtProductPrice').val('');
+                    }
+                    else {
+                        $("#txtProductPrice").val(result);
+                    }
+                },
+                error: ProductError
+            });
+        });
+
+        $("#datepicker").datepicker({
+            dateFormat: "dd-mm-yy",
+            changeMonth: true,
+            changeYear: true
+        });
+    });
+
+    function DisplayError() {
+        alert("Error on the server, could not load the data.");
+        $('#txtCustName').val('');
+    }
+
+    function ProductError() {
+        alert("Error on the server, could not load the data.");
+        $('#txtProductPrice').val('');
+    }
+</script>
